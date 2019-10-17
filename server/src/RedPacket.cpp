@@ -215,6 +215,28 @@ namespace crp {
         return 1;
     }
 
+    vector<QueryResultUserDto> RedPacket::queryCreateRedPacketByUser(int userId, sql::Connection *con) {
+        Statement *state;
+        ResultSet *resultSet;
+        vector<QueryResultUserDto> result;
+        state = con->createStatement();
+        char mysql[] = "select t.red_packet_id,t.amount,DATE_FORMAT(t.create_time,'%%Y-%%m-%%d %%H:%%i:%%s') as time "
+                       "from red_packet_t t left join user_t u on t.user_id=u.user_id where t.user_id=%d order by t.create_time desc";
+        char mysqlBuf[1024];
+        std::sprintf(mysqlBuf, mysql, userId);
+        resultSet = state->executeQuery(mysqlBuf);
+        while (resultSet->next()) {
+            QueryResultUserDto line;
+            line.redPacketId = resultSet->getInt("red_packet_id");
+            line.amount = resultSet->getInt("amount");
+            line.time = resultSet->getString("time");
+            result.push_back(line);
+        }
+        resultSet->close();
+        state->close();
+        return result;
+    }
+
     RedPacketLine RedPacketLine::getAndUpdateRedPacketLine(int redPacketId, int receiveUserId, sql::Connection *con) {
         Statement *state;
         state = con->createStatement();
@@ -256,5 +278,53 @@ namespace crp {
             return *redPacketLine;
         }
 
+    }
+
+    vector<QueryResultRedPacketDto> RedPacketLine::queryRedPacketStatus(int redPacketId, sql::Connection *con) {
+        Statement *state;
+        ResultSet *resultSet;
+        vector<QueryResultRedPacketDto> result;
+        state = con->createStatement();
+        char mysql[] = "select lt.receive_user_id,u.user_name as receive_user_name,lt.receive_amount,DATE_FORMAT(lt.last_update_time, '%%Y-%%m-%%d %%H:%%i:%%s') as time "
+                       "from red_packet_line_t lt left join user_t u on lt.receive_user_id=u.user_id  "
+                       "where lt.red_packet_id=%d and lt.receive_user_id!=-1 order by lt.last_update_time desc";
+        char mysqlBuf[1024];
+        std::sprintf(mysqlBuf, mysql, redPacketId);
+        resultSet = state->executeQuery(mysqlBuf);
+        while (resultSet->next()) {
+            QueryResultRedPacketDto line;
+            line.receiveUserId = resultSet->getInt("receive_user_id");
+            line.receiveUserName = resultSet->getString("receive_user_name");
+            line.amount = resultSet->getInt("receive_amount");
+            line.time = resultSet->getString("time");
+            result.push_back(line);
+        }
+        resultSet->close();
+        state->close();
+        return result;
+    }
+
+    vector<QueryResultReceiveUserDto> RedPacketLine::queryReceiveRedPacketByUser(int userId, sql::Connection *con) {
+        Statement *state;
+        ResultSet *resultSet;
+        vector<QueryResultReceiveUserDto> result;
+        state = con->createStatement();
+        char mysql[] = "select lt.red_packet_id,lt.user_id,u.user_name,lt.receive_amount,DATE_FORMAT(lt.last_update_time,'%%Y-%%m-%%d %%H:%%i:%%s') as time "
+                       "from red_packet_line_t lt left join user_t u on lt.user_id=u.user_id where lt.receive_user_id=%d order by lt.last_update_time desc;";
+        char mysqlBuf[1024];
+        std::sprintf(mysqlBuf, mysql, userId);
+        resultSet = state->executeQuery(mysqlBuf);
+        while (resultSet->next()) {
+            QueryResultReceiveUserDto line;
+            line.redPacketId = resultSet->getInt("red_packet_id");
+            line.userId = resultSet->getInt("user_id");
+            line.userName = resultSet->getString("user_name");
+            line.amount = resultSet->getInt("receive_amount");
+            line.time = resultSet->getString("time");
+            result.push_back(line);
+        }
+        resultSet->close();
+        state->close();
+        return result;
     }
 }

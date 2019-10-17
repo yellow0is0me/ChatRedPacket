@@ -6,6 +6,7 @@
 #include "../sql/connection_pool.h"
 #include "cppconn/connection.h"
 #include "cppconn/resultset.h"
+#include "../../thrift/gen-cpp/ChatRedPacket_types.h"
 
 #ifndef CHATREDPACKET_REDPACKET_H
 #define CHATREDPACKET_REDPACKET_H
@@ -45,6 +46,10 @@ namespace crp {
         int &getVersion();
 
         static RedPacketLine getAndUpdateRedPacketLine(int redPacketId, int receiveUserId, sql::Connection *con);
+
+        static vector<QueryResultRedPacketDto> queryRedPacketStatus(int redPacketId, sql::Connection *con);
+
+        static vector<QueryResultReceiveUserDto> queryReceiveRedPacketByUser(int userId, sql::Connection *con);
 
     private:
         int l_id;
@@ -91,6 +96,8 @@ namespace crp {
         int createRedPacket(sql::Connection *con);
 
         int createRedPacketLineList(sql::Connection *con);
+
+        static vector<QueryResultUserDto> queryCreateRedPacketByUser(int userId, sql::Connection *con);
 
     protected:
 

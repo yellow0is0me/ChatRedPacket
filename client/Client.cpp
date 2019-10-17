@@ -26,10 +26,10 @@ int main(int argc, char **argv) {
         transport->open();
         crp::OperateResultDto resultDto;
         crp::RedPacketCreateDto dto;
-        dto.uniqueId = "x123xxx231xx2sdx21";
-        dto.userId = 2;
-        dto.amount = 100;
-        dto.count = 2;
+        dto.uniqueId = "x123xxx2ss31xx2sdx21";
+        dto.userId = 1;
+        dto.amount = 50;
+        dto.count = 8;
         client.createRedPacket(resultDto, dto);
         std::cout << resultDto << std::endl;
 

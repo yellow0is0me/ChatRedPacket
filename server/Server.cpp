@@ -183,19 +183,57 @@ public:
     }
 
     void queryRedPacketStatus(std::vector<QueryResultRedPacketDto> &_return, const QueryByRedPacketIdDto &queryDto) {
-        // Your implementation goes here
-        printf("queryRedPacketStatus\n");
+        Connection *con = nullptr;
+        try {
+            if (queryDto.redPacketId <= 0)
+                throw logic_error("invalid redPacketId");
+            con = connpool->GetConnection();
+            _return = RedPacketLine::queryRedPacketStatus(queryDto.redPacketId, con);
+            con->commit();
+            connpool->ReleaseConnection(con);
+        } catch (exception &e) {
+            if (con != nullptr) {
+                con->rollback();
+                connpool->ReleaseConnection(con);
+            }
+            _return = vector<QueryResultRedPacketDto>();
+        }
     }
 
-    void
-    queryReceiveRedPacketByUser(std::vector<QueryResultReceiveUserDto> &_return, const QueryByUserIdDto &queryDto) {
-        // Your implementation goes here
-        printf("queryReceiveRedPacketByUser\n");
+    void queryReceiveRedPacketByUser(std::vector<QueryResultReceiveUserDto> &_return, const QueryByUserIdDto &queryDto) {
+        Connection *con = nullptr;
+        try {
+            if (queryDto.userId <= 0)
+                throw logic_error("invalid userId");
+            con = connpool->GetConnection();
+            _return = RedPacketLine::queryReceiveRedPacketByUser(queryDto.userId, con);
+            con->commit();
+            connpool->ReleaseConnection(con);
+        } catch (exception &e) {
+            if (con != nullptr) {
+                con->rollback();
+                connpool->ReleaseConnection(con);
+            }
+            _return = vector<QueryResultReceiveUserDto>();
+        }
     }
 
     void queryCreateRedPacketByUser(std::vector<QueryResultUserDto> &_return, const QueryByUserIdDto &queryDto) {
-        // Your implementation goes here
-        printf("queryCreateRedPacketByUser\n");
+        Connection *con = nullptr;
+        try {
+            if (queryDto.userId <= 0)
+                throw logic_error("invalid userId");
+            con = connpool->GetConnection();
+            _return = RedPacket::queryCreateRedPacketByUser(queryDto.userId, con);
+            con->commit();
+            connpool->ReleaseConnection(con);
+        } catch (exception &e) {
+            if (con != nullptr) {
+                con->rollback();
+                connpool->ReleaseConnection(con);
+            }
+            _return = vector<QueryResultUserDto>();
+        }
     }
 };
 
