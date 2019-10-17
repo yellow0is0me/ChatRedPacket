@@ -49,6 +49,7 @@ public:
         try {
             if (createDto.uniqueId.empty())
                 throw logic_error("uniqueId is null");
+            //uniqueId做sql注入的检查，算法的校验
             if (createDto.userId <= 0)
                 throw logic_error("invalid userId");
             if (createDto.count <= 0)
@@ -62,7 +63,6 @@ public:
                 uniqueIdList.insert(make_pair(createDto.uniqueId, uuid_string));
             }
 
-            //高并发可以扔到队列里，异步处理
             //找到用户，校验用户是否存在，且账户金额大于红包金额
             con = connpool->GetConnection();
             User user = User::getUserById(createDto.userId, con);
@@ -70,14 +70,14 @@ public:
                 throw logic_error("User amount must >= red packet amount");
             }
             //创建红包
-            auto redPacket = new RedPacket(createDto.userId, createDto.count, createDto.amount,
+            RedPacket redPacket(createDto.userId, createDto.count, createDto.amount,
                                            createDto.uniqueId);
             //插入数据库
-            int result = redPacket->createRedPacket(con);
-            //拆分数据库
-            RedPacket::splitRedPacket(redPacket);
+            int result = redPacket.createRedPacket(con);
+            //拆分红包
+            RedPacket::splitRedPacket(&redPacket);
             //插入数据库
-            result = redPacket->createRedPacketLineList(con);
+            result = redPacket.createRedPacketLineList(con);
             //扣减账户余额，只要够就行
             result = user.subAmount(createDto.amount, con);
 
@@ -130,6 +130,7 @@ public:
                 throw logic_error("invalid redPacketId");
             key = to_string(receiveDto.redPacketId) + "_" + to_string(receiveDto.userId);
 
+            //避免一个红包一个用户重复抢的问题
             if (receiveUserList.find(key) != receiveUserList.end()) {
                 throw logic_error("Duplicate request");
             } else {
@@ -140,9 +141,11 @@ public:
             //获取拆红包的user
             User user = User::getUserById(receiveDto.userId, con);
             //获取并锁定指定的红包
+            //这里可以在创建的时候，把创建好的红包放到缓存里，抢红包的时候抢缓存里的，然后更新数据库
             auto redPacketLine = RedPacketLine::getAndUpdateRedPacketLine(receiveDto.redPacketId, receiveDto.userId,
                                                                           con);
             //增加账户余额
+            //可异步处理
             int result = user.addAmount(redPacketLine.getReceiveAmount(), con);
 
             //提交

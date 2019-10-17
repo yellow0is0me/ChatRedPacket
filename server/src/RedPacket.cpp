@@ -7,19 +7,19 @@
 #include "RedPacket.h"
 
 namespace crp {
-    int &RedPacket::getRedPacketId() {
+    int RedPacket::getRedPacketId() {
         return m_redPacketId;
     }
 
-    int &RedPacket::getUserId() {
+    int RedPacket::getUserId() {
         return m_userId;
     }
 
-    int &RedPacket::getCount() {
+    int RedPacket::getCount() {
         return m_count;
     }
 
-    int &RedPacket::getAmount() {
+    int RedPacket::getAmount() {
         return m_amount;
     }
 
@@ -27,11 +27,11 @@ namespace crp {
         return m_finishFlag;
     }
 
-    std::string &RedPacket::getUniqueId() {
+    std::string RedPacket::getUniqueId() {
         return m_uniqueId;
     }
 
-    int &RedPacket::getVersion() {
+    int RedPacket::getVersion() {
         return m_version;
     }
 
@@ -88,23 +88,23 @@ namespace crp {
                                                                                    l_id(0),
                                                                                    l_backFlag(0) {}
 
-    int &RedPacketLine::getId() {
+    int RedPacketLine::getId() {
         return l_id;
     }
 
-    int &RedPacketLine::getRedPacketId() {
+    int RedPacketLine::getRedPacketId() {
         return l_redPacketId;
     }
 
-    int &RedPacketLine::getUserId() {
+    int RedPacketLine::getUserId() {
         return l_userId;
     }
 
-    int &RedPacketLine::getReceiveUserId() {
+    int RedPacketLine::getReceiveUserId() {
         return l_receiveUserId;
     }
 
-    int &RedPacketLine::getReceiveAmount() {
+    int RedPacketLine::getReceiveAmount() {
         return l_receiveAmount;
     }
 
@@ -116,7 +116,7 @@ namespace crp {
         return l_backFlag;
     }
 
-    int &RedPacketLine::getVersion() {
+    int RedPacketLine::getVersion() {
         return l_version;
     }
 
@@ -143,14 +143,15 @@ namespace crp {
         mValue.insert(nTotalAmount);
         while (mValue.size() < redPacket->getCount() + 1) {
             int temp = u(e) % (nTotalAmount - 1) + 1;
-            if (mValue.find(temp) != mValue.end())//make sure the slit point is a new point
-            {
+            //200元红包分200个，性能会很差
+            //如果个数超过钱的一半，考虑换一种算法
+            if (mValue.find(temp) != mValue.end()) {
                 continue;
             }
-            mValue.insert(temp);//put into the map
+            mValue.insert(temp);
         }
 
-        auto list = std::vector<RedPacketLine>();
+        std::vector<RedPacketLine> list;
 
         auto itor = mValue.begin();
         auto itor_1 = mValue.begin();
@@ -173,9 +174,9 @@ namespace crp {
 
         state = con->createStatement();
         char mysql[] = "insert into red_packet_t(unique_id,user_id,count,amount,create_time,last_update_time) values ('%s','%d','%d','%d',now(),now())";
-        char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, this->getUniqueId().data(), this->getUserId(), this->getCount(),
-                     this->getAmount());
+        char mysqlBuf[4096];
+        std::snprintf(mysqlBuf, 4096, mysql, this->getUniqueId().data(), this->getUserId(), this->getCount(),
+                      this->getAmount());
         int result = state->executeUpdate(mysqlBuf);
         if (result == 1) {
             resultSet = state->executeQuery("select last_insert_id() as id");
@@ -200,8 +201,8 @@ namespace crp {
         while (iter != m_list.cend()) {
             char mysql[] = "insert into red_packet_line_t(red_packet_id,user_id,receive_user_id,receive_amount,create_time,last_update_time) values ('%d','%d','%d','%d',now(),now())";
             char mysqlBuf[1024];
-            std::sprintf(mysqlBuf, mysql, iter->getRedPacketId(), iter->getUserId(), iter->getReceiveUserId(),
-                         iter->getReceiveAmount());
+            std::snprintf(mysqlBuf, 1024, mysql, iter->getRedPacketId(), iter->getUserId(), iter->getReceiveUserId(),
+                          iter->getReceiveAmount());
             result = state->executeUpdate(mysqlBuf);
             if (result != 1) {
                 break;
@@ -220,10 +221,11 @@ namespace crp {
         ResultSet *resultSet;
         vector<QueryResultUserDto> result;
         state = con->createStatement();
+        //需要考虑分页的问题
         char mysql[] = "select t.red_packet_id,t.amount,DATE_FORMAT(t.create_time,'%%Y-%%m-%%d %%H:%%i:%%s') as time "
                        "from red_packet_t t left join user_t u on t.user_id=u.user_id where t.user_id=%d order by t.create_time desc";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, userId);
+        std::snprintf(mysqlBuf, 1024, mysql, userId);
         resultSet = state->executeQuery(mysqlBuf);
         while (resultSet->next()) {
             QueryResultUserDto line;
@@ -242,18 +244,18 @@ namespace crp {
         state = con->createStatement();
         char mysql[] = "update red_packet_line_t set receive_user_id = %d,version=version+1,last_update_time=now() where red_packet_id=%d and receive_user_id=-1 and version=1 limit 1";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, receiveUserId, redPacketId);
+        std::snprintf(mysqlBuf, 1024, mysql, receiveUserId, redPacketId);
         int result = state->executeUpdate(mysqlBuf);
         int i = 0;
-        RedPacketLine *redPacketLine = nullptr;
+        RedPacketLine redPacketLine;
         if (result == 1) {
             char mysql2[] = "select * from  red_packet_line_t where red_packet_id=%d and receive_user_id=%d";
             char mysqlBuf2[1024];
             ResultSet *resultSet;
-            std::sprintf(mysqlBuf2, mysql2, redPacketId, receiveUserId);
+            std::snprintf(mysqlBuf2, 1024, mysql2, redPacketId, receiveUserId);
             resultSet = state->executeQuery(mysqlBuf2);
             while (resultSet->next()) {
-                redPacketLine = new RedPacketLine(
+                redPacketLine = RedPacketLine(
                         resultSet->getInt("id"),
                         resultSet->getInt("red_packet_id"),
                         resultSet->getInt("user_id"),
@@ -261,7 +263,7 @@ namespace crp {
                         resultSet->getInt("receive_amount"),
                         resultSet->getInt("back_flag"),
                         resultSet->getInt("version")
-                        );
+                );
                 i++;
                 if (i > 1) {
                     break;
@@ -275,7 +277,7 @@ namespace crp {
         } else if (i <= 0) {
             throw logic_error("RedPacketLine not found");
         } else {
-            return *redPacketLine;
+            return redPacketLine;
         }
 
     }
@@ -285,11 +287,12 @@ namespace crp {
         ResultSet *resultSet;
         vector<QueryResultRedPacketDto> result;
         state = con->createStatement();
+        //需要考虑分页的问题
         char mysql[] = "select lt.receive_user_id,u.user_name as receive_user_name,lt.receive_amount,DATE_FORMAT(lt.last_update_time, '%%Y-%%m-%%d %%H:%%i:%%s') as time "
                        "from red_packet_line_t lt left join user_t u on lt.receive_user_id=u.user_id  "
                        "where lt.red_packet_id=%d and lt.receive_user_id!=-1 order by lt.last_update_time desc";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, redPacketId);
+        std::snprintf(mysqlBuf, 1024, mysql, redPacketId);
         resultSet = state->executeQuery(mysqlBuf);
         while (resultSet->next()) {
             QueryResultRedPacketDto line;
@@ -309,10 +312,11 @@ namespace crp {
         ResultSet *resultSet;
         vector<QueryResultReceiveUserDto> result;
         state = con->createStatement();
+        //需要考虑分页的问题
         char mysql[] = "select lt.red_packet_id,lt.user_id,u.user_name,lt.receive_amount,DATE_FORMAT(lt.last_update_time,'%%Y-%%m-%%d %%H:%%i:%%s') as time "
                        "from red_packet_line_t lt left join user_t u on lt.user_id=u.user_id where lt.receive_user_id=%d order by lt.last_update_time desc;";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, userId);
+        std::snprintf(mysqlBuf, 1024, mysql, userId);
         resultSet = state->executeQuery(mysqlBuf);
         while (resultSet->next()) {
             QueryResultReceiveUserDto line;

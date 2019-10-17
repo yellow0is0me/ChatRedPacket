@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 void get3(crp::ChatRedPacketClient client) {
     std::vector<crp::QueryResultUserDto> resultDto;
     crp::QueryByUserIdDto dto;
-    dto.userId = 3;
+    dto.userId = 2;
     client.queryCreateRedPacketByUser(resultDto, dto);
     for (crp::QueryResultUserDto dto1:resultDto) {
         std::cout << dto1 << std::endl;

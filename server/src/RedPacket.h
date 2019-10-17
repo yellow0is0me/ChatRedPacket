@@ -29,21 +29,21 @@ namespace crp {
 
         ~RedPacketLine() = default;
 
-        int &getId();
+        int getId();
 
-        int &getRedPacketId();
+        int getRedPacketId();
 
-        int &getUserId();
+        int getUserId();
 
-        int &getReceiveUserId();
+        int getReceiveUserId();
 
-        int &getReceiveAmount();
+        int getReceiveAmount();
 
         void setReceiveAmount(int amount);
 
         int getBackFlag();
 
-        int &getVersion();
+        int getVersion();
 
         static RedPacketLine getAndUpdateRedPacketLine(int redPacketId, int receiveUserId, sql::Connection *con);
 
@@ -73,19 +73,19 @@ namespace crp {
 
         ~RedPacket() = default;
 
-        int &getRedPacketId();
+        int getRedPacketId();
 
-        int &getUserId();
+        int getUserId();
 
-        int &getCount();
+        int getCount();
 
-        int &getAmount();
+        int getAmount();
 
         int getFinishFlag();
 
-        std::string &getUniqueId();
+        std::string getUniqueId();
 
-        int &getVersion();
+        int getVersion();
 
         std::vector<RedPacketLine> &getList();
 

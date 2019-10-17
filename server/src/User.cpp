@@ -8,15 +8,15 @@
 
 namespace crp {
 
-    int &User::get_userId() {
+    int User::get_userId() {
         return m_userId;
     }
 
-    std::string &User::get_userName() {
+    std::string User::get_userName() {
         return m_userName;
     }
 
-    int &User::get_amount() {
+    int User::get_amount() {
         return m_amount;
     }
 
@@ -35,17 +35,13 @@ namespace crp {
         state = con->createStatement();
         char mysql[] = "select * from user_t where user_id = %d";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, userId);
+        std::snprintf(mysqlBuf, 1024, mysql, userId);
         result = state->executeQuery(mysqlBuf);
 
-        User *user = nullptr;
+        User user;
         int i = 0;
-        while (result->next()) {
-            user = new User(result->getInt("user_id"), result->getString("user_name"), result->getInt("amount"));
-            i++;
-            if (i > 1) {
-                break;
-            }
+        if (result->next()) {
+            user = User(result->getInt("user_id"), result->getString("user_name"), result->getInt("amount"));
         }
         con->commit();
         state->close();
@@ -55,7 +51,7 @@ namespace crp {
         } else if (i <= 0) {
             throw logic_error("User not found");
         } else {
-            return *user;
+            return user;
         }
 
     }
@@ -65,7 +61,7 @@ namespace crp {
         state = con->createStatement();
         char mysql[] = "update user_t set amount=amount-(%d) where user_id = %d and amount >= (%d)";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, changeAmount, m_userId, changeAmount);
+        std::snprintf(mysqlBuf, 1024, mysql, changeAmount, m_userId, changeAmount);
         int result = state->executeUpdate(mysqlBuf);
         state->close();
         if (result != 1) {
@@ -79,7 +75,7 @@ namespace crp {
         state = con->createStatement();
         char mysql[] = "update user_t set amount=amount+(%d) where user_id = %d";
         char mysqlBuf[1024];
-        std::sprintf(mysqlBuf, mysql, changeAmount, m_userId);
+        std::snprintf(mysqlBuf, 1024, mysql, changeAmount, m_userId);
         int result = state->executeUpdate(mysqlBuf);
         state->close();
         if (result != 1) {
@@ -87,4 +83,6 @@ namespace crp {
         }
         return 1;
     }
+
+    User::User() {}
 }

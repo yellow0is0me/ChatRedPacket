@@ -18,19 +18,21 @@
 namespace crp {
     class User {
     public:
-        int &get_userId();
+        User(int userId, std::string userName, int amount);
 
-        std::string &get_userName();
+        User();
 
-        int &get_amount();
+        ~User() = default;
+
+        int get_userId();
+
+        std::string get_userName();
+
+        int get_amount();
 
         void update_amount(int newAmount);
 
-        User(int userId, std::string userName, int amount);
-
         static User getUserById(int userId, sql::Connection *con);
-
-        ~User() = default;
 
         int subAmount(int changeAmount, sql::Connection *con);
 
