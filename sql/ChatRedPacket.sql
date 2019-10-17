@@ -44,7 +44,7 @@ CREATE TABLE `red_packet_t` (
   `count` int(6) DEFAULT NULL,
   `amount` int(20) DEFAULT '0',
   `finish_flag` int(1) DEFAULT '0',
-  `unique_id` varchar(500) NOT NULL,
+  `unique_id` varchar(100) NOT NULL,
   `create_time` datetime DEFAULT NULL,
   `last_update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `version` int(11) DEFAULT '1',
