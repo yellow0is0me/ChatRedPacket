@@ -42,13 +42,12 @@ namespace crp {
         int i = 0;
         if (result->next()) {
             user = User(result->getInt("user_id"), result->getString("user_name"), result->getInt("amount"));
+            i = 1;
         }
         con->commit();
         state->close();
         result->close();
-        if (i > 1) {
-            throw logic_error("Duplicate User");
-        } else if (i <= 0) {
+        if (i <= 0) {
             throw logic_error("User not found");
         } else {
             return user;
